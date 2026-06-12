@@ -480,10 +480,9 @@
         <textarea id="f-note" placeholder="Which nights you're staying / cabin preference / dietary needs..."></textarea>
 
         <div class="form-actions">
-          <button class="btn btn-submit" id="rsvpBtn">I'm coming &mdash; add me &#127881;</button>
-          <a class="btn btn-email" id="emailBtn" href="#">&hellip;or send your RSVP by email instead</a>
+          <a class="btn btn-submit" id="rsvpBtn" href="#" style="text-align:center">Send my RSVP &#127881;</a>
         </div>
-        <div class="form-note" id="formNote">Your name appears on the shared "Who's coming" list.</div>
+        <div class="form-note" id="formNote">Your RSVP goes straight to the organizers (Allyn &amp; Brent), who'll add you to the list. Cabin holders are already confirmed below.</div>
         <div class="book-next"><b>Next step:</b> after you RSVP, reserve your cabin directly with Orchard Canyon &mdash; <b>(928) 282-3343</b> or reservations@enjoyorchardcanyon.com. They handle your deposit &amp; payment. Check the cabins section above to see what's still open.</div>
       </div>
 
@@ -587,34 +586,34 @@
   }
   function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
 
-  document.getElementById('rsvpBtn').addEventListener('click',async()=>{
+  /* RSVP delivery: opens a prefilled email to the organizers (works on any host) */
+  function buildMailto(){
     const name=document.getElementById('f-name').value.trim();
+    const maiden=document.getElementById('f-maiden').value.trim();
     const email=document.getElementById('f-email').value.trim();
-    if(!name){document.getElementById('f-name').focus();document.getElementById('formNote').textContent='Please add your name first.';return;}
-    if(!email){document.getElementById('f-email').focus();document.getElementById('formNote').textContent='Please add your email so the lodge can reach you.';return;}
-    const entry={
-      name:esc(name),
-      maiden:esc(document.getElementById('f-maiden').value.trim()),
-      email:esc(email),
-      guests:document.getElementById('f-guests').value,
-      note:esc(document.getElementById('f-note').value.trim().slice(0,160))
-    };
-    list.push(entry);
-    await save();
-    render();
-    ['f-name','f-maiden','f-email','f-note'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('formNote').textContent="\uD83C\uDF89 You're on the list \u2014 now book your cabin with the lodge (see below).";
-  });
-
-  function updateMailto(){
-    const name=document.getElementById('f-name').value.trim()||'(your name)';
     const guests=document.getElementById('f-guests').value;
     const note=document.getElementById('f-note').value.trim();
-    const body=encodeURIComponent("Hi! I'm confirming my RSVP for the Mohave HS Class of '92 35-year reunion (June 11-14, 2027, Orchard Canyon, Sedona).\n\nName: "+name+"\nParty size: "+guests+"\nNote: "+note);
-    document.getElementById('emailBtn').href='mailto:'+ORGANIZER_EMAIL+'?subject='+encodeURIComponent("Reunion RSVP")+'&body='+body;
+    const body=encodeURIComponent(
+      "I'm confirming my RSVP for the Mohave HS Class of '92 35-year reunion "+
+      "(June 11-14, 2027, Orchard Canyon, Sedona).\n\n"+
+      "Name: "+name+"\n"+
+      (maiden?"Known in school as: "+maiden+"\n":"")+
+      "Email: "+email+"\n"+
+      "Total in party: "+guests+"\n"+
+      "Note: "+(note||"-"));
+    return 'mailto:'+ORGANIZER_EMAIL+'?subject='+encodeURIComponent("Reunion RSVP \u2014 "+name)+'&body='+body;
   }
-  ['f-name','f-guests','f-note'].forEach(id=>document.getElementById(id).addEventListener('input',updateMailto));
-  updateMailto();
+  function refreshRsvpLink(){document.getElementById('rsvpBtn').setAttribute('href',buildMailto());}
+  ['f-name','f-maiden','f-email','f-guests','f-note'].forEach(id=>document.getElementById(id).addEventListener('input',refreshRsvpLink));
+  refreshRsvpLink();
+  document.getElementById('rsvpBtn').addEventListener('click',function(e){
+    const name=document.getElementById('f-name').value.trim();
+    const email=document.getElementById('f-email').value.trim();
+    if(!name){e.preventDefault();document.getElementById('f-name').focus();document.getElementById('formNote').textContent='Please add your name first.';return;}
+    if(!email){e.preventDefault();document.getElementById('f-email').focus();document.getElementById('formNote').textContent='Please add your email so we can reach you.';return;}
+    refreshRsvpLink();
+    document.getElementById('formNote').textContent="\uD83C\uDF89 Thanks "+name+"! Your RSVP email is opening \u2014 just hit send and we'll add you to the list.";
+  });
 
   /* ---- countdown to check-in (June 11, 2027, 3 PM Arizona / MST) ---- */
   (function(){
@@ -672,6 +671,7 @@
   const CABIN_CLAIMS = {
     "cabin-1": "Ashley",
     "cabin-2": "Tiffany",
+    "cabin-3": "Yusni Keeter (Allyn's mom)",
     "cabin-4": "Allyn",
     "cabin-5": "Brent",
     "cabin-6": "Clayton",
