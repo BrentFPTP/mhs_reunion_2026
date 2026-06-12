@@ -12,7 +12,6 @@
      EDIT QUICK-START (for the organizer):
      - Remaining TBD items (catered lunch / day-guest meal fee) are
        marked in the page; search for "TBD" to find them.
-     - Throwback photos: swap the "PHOTO PLACEHOLDER" blocks for <img> tags.
      - Cabin claims: edit CABIN_CLAIMS near the bottom <script>.
      ============================================================ */
   :root{
@@ -452,20 +451,6 @@
   </div>
 </section>
 
-<!-- ============ THEN & NOW PHOTOS ============ -->
-<section id="photos">
-  <div class="wrap">
-    <div class="section-tag">Then &amp; Now</div>
-    <h2>Throwback wall</h2>
-    <p class="lead">Drop in old class photos, yearbook shots, or candids here. (Replace each block below with an &lt;img&gt; tag pointing to your photo.)</p>
-    <div class="gallery">
-      <div class="photo-ph">PHOTO PLACEHOLDER<br>Add a yearbook / class photo</div>
-      <div class="photo-ph">PHOTO PLACEHOLDER<br>Add a candid throwback</div>
-      <div class="photo-ph">PHOTO PLACEHOLDER<br>Add a campus / mascot shot</div>
-    </div>
-  </div>
-</section>
-
 <!-- ============ RSVP ============ -->
 <section id="rsvp">
   <div class="wrap">
@@ -568,12 +553,29 @@
   async function save(){
     try{ await window.storage.set(KEY,JSON.stringify(list),true); }catch(e){}
   }
+  function committedList(){
+    const out=[];
+    document.querySelectorAll('.cab').forEach(c=>{
+      const who=CABIN_CLAIMS[c.getAttribute('data-cab')];
+      if(who){
+        const cn=c.querySelector('.cn');
+        out.push({name:who,cabin:cn?cn.textContent.trim():''});
+      }
+    });
+    return out;
+  }
   function render(){
     const wrap=document.getElementById('attendees');
-    const total=list.reduce((s,a)=>s+(parseInt(a.guests)||1),0);
-    document.getElementById('count').textContent=total;
-    if(!list.length){wrap.innerHTML='<div class="empty">Be the first to RSVP!</div>';return;}
+    const committed=committedList();
+    const rsvpHeads=list.reduce((s,a)=>s+(parseInt(a.guests)||1),0);
+    document.getElementById('count').textContent=committed.length+rsvpHeads;
+    if(!committed.length && !list.length){wrap.innerHTML='<div class="empty">Be the first to RSVP!</div>';return;}
     wrap.innerHTML='';
+    committed.forEach(c=>{
+      const el=document.createElement('div');el.className='att';
+      el.innerHTML='<span class="nm">'+c.name+'</span><span class="gs">\uD83C\uDFD5\uFE0F '+c.cabin+'</span>';
+      wrap.appendChild(el);
+    });
     list.slice().reverse().forEach(a=>{
       const el=document.createElement('div');el.className='att';
       const who=a.maiden?a.name+' <span style="opacity:.7;font-weight:400">('+a.maiden+')</span>':a.name;
